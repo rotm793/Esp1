@@ -87,6 +87,49 @@ titleLabel.Font = Enum.Font.GothamBlack
 titleLabel.TextSize = 16
 titleLabel.Parent = titleBar
 
+-- Mobil Kapatma Butonu
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 36, 0, 32)
+closeBtn.Position = UDim2.new(1, -38, 0, 0)
+closeBtn.BackgroundTransparency = 1
+closeBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+closeBtn.Font = Enum.Font.GothamBlack
+closeBtn.TextSize = 18
+closeBtn.Text = "✕"
+closeBtn.ZIndex = 5
+closeBtn.Parent = titleBar
+
+closeBtn.MouseButton1Click:Connect(function()
+    listFrame.Visible = false
+end)
+
+-- Yeniden Aç Butonu (mobil için ekran köşesinde küçük buton)
+local reopenBtn = Instance.new("TextButton")
+reopenBtn.Size = UDim2.new(0, 42, 0, 42)
+reopenBtn.Position = UDim2.new(1, -52, 0, 10)
+reopenBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+reopenBtn.TextColor3 = Color3.new(1, 1, 1)
+reopenBtn.Font = Enum.Font.GothamBlack
+reopenBtn.TextSize = 18
+reopenBtn.Text = "☰"
+reopenBtn.BorderSizePixel = 0
+reopenBtn.Visible = false
+reopenBtn.ZIndex = 10
+reopenBtn.Parent = gui
+Instance.new("UICorner", reopenBtn).CornerRadius = UDim.new(0, 10)
+local rStroke = Instance.new("UIStroke", reopenBtn)
+rStroke.Color = Color3.fromRGB(55, 55, 55)
+rStroke.Thickness = 1
+
+closeBtn.MouseButton1Click:Connect(function()
+    reopenBtn.Visible = true
+end)
+
+reopenBtn.MouseButton1Click:Connect(function()
+    listFrame.Visible = true
+    reopenBtn.Visible = false
+end)
+
 local sep = Instance.new("Frame")
 sep.Size = UDim2.new(1, 0, 0, 1)
 sep.Position = UDim2.new(0, 0, 0, 32)
@@ -164,7 +207,7 @@ end
 local soundBtn = makeBottomBtn("🔊 Sound: On", PAD)
 local radioBtn = makeBottomBtn("☢ Radio: On", PAD * 2 + BW)
 
-local keyBox = Instance.new("TextButton") -- TextButton kullan, TextBox giriş sorunu çıkarıyor
+local keyBox = Instance.new("TextButton")
 keyBox.Size = UDim2.new(0, BW, 0, 26)
 keyBox.Position = UDim2.new(0, PAD * 3 + BW * 2, 0.5, -13)
 keyBox.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
@@ -231,7 +274,6 @@ local function createNotification(text, accentColor)
     fStroke.Color = Color3.fromRGB(60, 60, 60)
     fStroke.Thickness = 1
 
-    -- Üst progress bar
     local barBg = Instance.new("Frame")
     barBg.Size = UDim2.new(1, -12, 0, 3)
     barBg.Position = UDim2.new(0, 6, 0, 0)
@@ -249,7 +291,6 @@ local function createNotification(text, accentColor)
     bar.Parent = barBg
     Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
 
-    -- Sol aksanı
     local accent = Instance.new("Frame")
     accent.Size = UDim2.new(0, 3, 1, -14)
     accent.Position = UDim2.new(0, 7, 0, 7)
@@ -259,7 +300,6 @@ local function createNotification(text, accentColor)
     accent.Parent = frame
     Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
 
-    -- Yazı
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -22, 1, -6)
     label.Position = UDim2.new(0, 16, 0, 3)
@@ -393,7 +433,6 @@ local function applyButtonColor(plr, btn)
 end
 
 local function refreshButton(plr, btn)
-    local class = getClass(plr)
     local hp = 0
     if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
         hp = math.floor(plr.Character:FindFirstChildOfClass("Humanoid").Health)
@@ -405,7 +444,6 @@ local function refreshButton(plr, btn)
         dist = math.floor((lr.Position - pr.Position).Magnitude)
     end
     local tag = btn:GetAttribute("Tag") or "NEUTRAL"
-    -- Sadece text güncelle, renk dokunma (tıklama smoothluğu için)
     btn.Text = "[" .. tag .. "] " .. plr.Name .. "  ♥" .. hp .. "  " .. dist .. "m"
 end
 
@@ -446,7 +484,6 @@ local function createPlayerRow(plr)
         hum.HealthChanged:Connect(function()
             if playerButtons[plr] then refreshButton(plr, playerButtons[plr]) end
         end)
-        -- Lobiden oyuna geçince friend ise damage listener yeniden kur
         if getClass(plr) == "friend" then
             task.wait(0.5)
             setupFriendDamageListener(plr)
@@ -486,7 +523,6 @@ end
 Players.PlayerAdded:Connect(function(plr)
     createPlayerRow(plr)
     autoFriend(plr)
-    -- Yeni gelen oyuncunun karakteri henüz yüklenmemiş olabilir; yüklenince ESP kur
     if not plr.Character then
         plr.CharacterAdded:Wait()
     end
@@ -517,8 +553,6 @@ local function createESP(plr)
     esp.AlwaysOnTop = true
     esp.Parent = root
 
-
-
     local lbl = Instance.new("TextLabel")
     lbl.Name = "Label"
     lbl.Size = UDim2.new(1, -8, 1, 0)
@@ -541,11 +575,9 @@ RunService.RenderStepped:Connect(function()
             local char = plr.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
             if char and root then
-                -- ESP oluştur (her zaman, panel kapalıysa da)
                 createESP(plr)
                 local esp = root:FindFirstChild("SW_ESP")
                 if esp then
-                    -- ESP her zaman açık; leaderboard kapalıysa da stat güncellenir
                     esp.Enabled = true
                     local hum = char:FindFirstChildOfClass("Humanoid")
                     local lbl = esp:FindFirstChild("Label")
@@ -562,7 +594,6 @@ RunService.RenderStepped:Connect(function()
                         lbl.Text = plr.Name .. "  ♥" .. hp .. "  " .. dist .. "m"
                     end
                 end
-                -- Buton mesafe güncelle
                 if playerButtons[plr] then
                     refreshButton(plr, playerButtons[plr])
                 end
@@ -586,6 +617,7 @@ UserInputService.InputBegan:Connect(function(input, gp)
 
     if input.KeyCode.Name == toggleKey then
         listFrame.Visible = not listFrame.Visible
+        reopenBtn.Visible = not listFrame.Visible
     end
 end)
 
