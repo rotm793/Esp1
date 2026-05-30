@@ -53,9 +53,9 @@ local toggleKey    = "Home"
 local capturingKey = false
 
 -- ANA PANEL
-local PANEL_W  = 265
-local PANEL_H  = 340
-local BOTTOM_H = 36
+local PANEL_W      = 265
+local PANEL_H      = 340
+local BOTTOM_H     = 36
 
 local listFrame = Instance.new("Frame")
 listFrame.Name = "listFrame"
@@ -79,39 +79,13 @@ titleBar.BorderSizePixel = 0
 titleBar.Parent = listFrame
 
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -36, 1, 0) -- X butonu için sağdan boşluk
+titleLabel.Size = UDim2.new(1, 0, 1, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Text = "SW HUB"
 titleLabel.TextColor3 = Color3.new(1, 1, 1)
 titleLabel.Font = Enum.Font.GothamBlack
 titleLabel.TextSize = 16
 titleLabel.Parent = titleBar
-
--- MOBİL X BUTONU (başlık çubuğuna)
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 28, 0, 28)
-closeBtn.Position = UDim2.new(1, -32, 0.5, -14)
-closeBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.Font = Enum.Font.GothamBlack
-closeBtn.TextSize = 14
-closeBtn.Text = "✕"
-closeBtn.BorderSizePixel = 0
-closeBtn.ZIndex = 5
-closeBtn.Parent = titleBar
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
-
-closeBtn.MouseButton1Click:Connect(function()
-    listFrame.Visible = false
-end)
-
--- Hover efekti (mobilde görünmez ama masaüstü için güzel)
-closeBtn.MouseEnter:Connect(function()
-    TweenService:Create(closeBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(220, 60, 60)}):Play()
-end)
-closeBtn.MouseLeave:Connect(function()
-    TweenService:Create(closeBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(180, 40, 40)}):Play()
-end)
 
 local sep = Instance.new("Frame")
 sep.Size = UDim2.new(1, 0, 0, 1)
@@ -120,10 +94,27 @@ sep.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 sep.BorderSizePixel = 0
 sep.Parent = listFrame
 
+-- Arama kutusu
+local searchBox = Instance.new("TextBox")
+searchBox.Size = UDim2.new(1, -16, 0, 24)
+searchBox.Position = UDim2.new(0, 8, 0, 40)
+searchBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+searchBox.TextColor3 = Color3.new(1, 1, 1)
+searchBox.PlaceholderText = "🔍 Search..."
+searchBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
+searchBox.Font = Enum.Font.GothamMedium
+searchBox.TextSize = 12
+searchBox.BorderSizePixel = 0
+searchBox.ClearTextOnFocus = false
+searchBox.Parent = listFrame
+Instance.new("UICorner", searchBox).CornerRadius = UDim.new(0, 6)
+local sbPad = Instance.new("UIPadding", searchBox)
+sbPad.PaddingLeft = UDim.new(0, 8)
+
 -- Scroll
 local scrolling = Instance.new("ScrollingFrame")
-scrolling.Position = UDim2.new(0, 6, 0, 36)
-scrolling.Size = UDim2.new(1, -12, 0, PANEL_H - 36 - BOTTOM_H - 8)
+scrolling.Position = UDim2.new(0, 6, 0, 70)
+scrolling.Size = UDim2.new(1, -12, 0, PANEL_H - 70 - BOTTOM_H - 8)
 scrolling.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrolling.BackgroundTransparency = 1
 scrolling.BorderSizePixel = 0
@@ -173,7 +164,7 @@ end
 local soundBtn = makeBottomBtn("🔊 Sound: On", PAD)
 local radioBtn = makeBottomBtn("☢ Radio: On", PAD * 2 + BW)
 
-local keyBox = Instance.new("TextButton")
+local keyBox = Instance.new("TextButton") -- TextButton kullan, TextBox giriş sorunu çıkarıyor
 keyBox.Size = UDim2.new(0, BW, 0, 26)
 keyBox.Position = UDim2.new(0, PAD * 3 + BW * 2, 0.5, -13)
 keyBox.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
@@ -184,34 +175,6 @@ keyBox.Text = "🔑 " .. toggleKey
 keyBox.BorderSizePixel = 0
 keyBox.Parent = bottomBar
 Instance.new("UICorner", keyBox).CornerRadius = UDim.new(0, 6)
-
--- MOBİL: Panel kapalıyken tekrar açmak için küçük buton
-local reopenBtn = Instance.new("TextButton")
-reopenBtn.Size = UDim2.new(0, 44, 0, 44)
-reopenBtn.Position = UDim2.new(1, -54, 0, 10)
-reopenBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
-reopenBtn.TextColor3 = Color3.new(1, 1, 1)
-reopenBtn.Font = Enum.Font.GothamBlack
-reopenBtn.TextSize = 18
-reopenBtn.Text = "☰"
-reopenBtn.BorderSizePixel = 0
-reopenBtn.Visible = false
-reopenBtn.ZIndex = 10
-reopenBtn.Parent = gui
-Instance.new("UICorner", reopenBtn).CornerRadius = UDim.new(0, 10)
-local rStroke = Instance.new("UIStroke", reopenBtn)
-rStroke.Color = Color3.fromRGB(55, 55, 55)
-rStroke.Thickness = 1
-
-reopenBtn.MouseButton1Click:Connect(function()
-    listFrame.Visible = true
-    reopenBtn.Visible = false
-end)
-
--- Panel görünürlük değişince reopen butonu güncelle
-listFrame:GetPropertyChangedSignal("Visible"):Connect(function()
-    reopenBtn.Visible = not listFrame.Visible
-end)
 
 -- Toggle bağlantıları
 soundBtn.MouseButton1Click:Connect(function()
@@ -231,15 +194,15 @@ keyBox.MouseButton1Click:Connect(function()
 end)
 
 -- BİLDİRİM SİSTEMİ
-local NOTIF_W      = 300
-local NOTIF_H      = 52
-local NOTIF_GAP    = 6
-local NOTIF_BOT    = 14
-local showTime     = 3.5
-local fadeTime     = 0.4
+local NOTIF_W     = 300
+local NOTIF_H     = 52
+local NOTIF_GAP   = 6
+local NOTIF_BOT   = 14
+local showTime    = 3.5
+local fadeTime    = 0.4
 local activeNotifs = {}
 local damageCooldown = {}
-local COOLDOWN     = 10
+local COOLDOWN    = 10
 
 local function repositionNotifs()
     local y = NOTIF_BOT
@@ -268,6 +231,7 @@ local function createNotification(text, accentColor)
     fStroke.Color = Color3.fromRGB(60, 60, 60)
     fStroke.Thickness = 1
 
+    -- Üst progress bar
     local barBg = Instance.new("Frame")
     barBg.Size = UDim2.new(1, -12, 0, 3)
     barBg.Position = UDim2.new(0, 6, 0, 0)
@@ -285,6 +249,7 @@ local function createNotification(text, accentColor)
     bar.Parent = barBg
     Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
 
+    -- Sol aksanı
     local accent = Instance.new("Frame")
     accent.Size = UDim2.new(0, 3, 1, -14)
     accent.Position = UDim2.new(0, 7, 0, 7)
@@ -294,6 +259,7 @@ local function createNotification(text, accentColor)
     accent.Parent = frame
     Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
 
+    -- Yazı
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -22, 1, -6)
     label.Position = UDim2.new(0, 16, 0, 3)
@@ -398,6 +364,34 @@ end
 -- OYUNCU BUTONLARI
 local playerButtons = {}
 
+-- Arama filtresi
+local searchQuery = ""
+searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    searchQuery = searchBox.Text:lower()
+    for plr, btn in pairs(playerButtons) do
+        if searchQuery == "" then
+            btn.Visible = true
+        else
+            btn.Visible = plr.Name:lower():find(searchQuery, 1, true) ~= nil
+        end
+    end
+end)
+
+local function applyButtonColor(plr, btn)
+    local class = getClass(plr)
+    local color, tag
+    if class == "friend" then
+        color = FRIEND_COLOR; tag = "FRIEND"
+    elseif class == "enemy" then
+        color = ENEMY_COLOR; tag = "ENEMY"
+    else
+        color = NEUTRAL_COLOR; tag = "NEUTRAL"
+    end
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = class == "neutral" and Color3.fromRGB(20, 20, 20) or Color3.new(1, 1, 1)
+    btn:SetAttribute("Tag", tag)
+end
+
 local function refreshButton(plr, btn)
     local class = getClass(plr)
     local hp = 0
@@ -410,17 +404,14 @@ local function refreshButton(plr, btn)
     if lr and pr then
         dist = math.floor((lr.Position - pr.Position).Magnitude)
     end
-    local color, tag
-    if class == "friend" then
-        color = FRIEND_COLOR; tag = "FRIEND"
-    elseif class == "enemy" then
-        color = ENEMY_COLOR; tag = "ENEMY"
-    else
-        color = NEUTRAL_COLOR; tag = "NEUTRAL"
-    end
-    btn.BackgroundColor3 = color
-    btn.TextColor3 = class == "neutral" and Color3.fromRGB(20, 20, 20) or Color3.new(1, 1, 1)
+    local tag = btn:GetAttribute("Tag") or "NEUTRAL"
+    -- Sadece text güncelle, renk dokunma (tıklama smoothluğu için)
     btn.Text = "[" .. tag .. "] " .. plr.Name .. "  ♥" .. hp .. "  " .. dist .. "m"
+end
+
+local function refreshButtonFull(plr, btn)
+    applyButtonColor(plr, btn)
+    refreshButton(plr, btn)
 end
 
 local function createPlayerRow(plr)
@@ -442,11 +433,11 @@ local function createPlayerRow(plr)
     bp.PaddingRight = UDim.new(0, 8)
 
     playerButtons[plr] = btn
-    refreshButton(plr, btn)
+    refreshButtonFull(plr, btn)
 
     btn.MouseButton1Click:Connect(function()
         local newClass = cycleClass(plr)
-        refreshButton(plr, btn)
+        refreshButtonFull(plr, btn)
         if newClass == "friend" then setupFriendDamageListener(plr) end
     end)
 
@@ -455,13 +446,53 @@ local function createPlayerRow(plr)
         hum.HealthChanged:Connect(function()
             if playerButtons[plr] then refreshButton(plr, playerButtons[plr]) end
         end)
+        -- Lobiden oyuna geçince friend ise damage listener yeniden kur
+        if getClass(plr) == "friend" then
+            task.wait(0.5)
+            setupFriendDamageListener(plr)
+        end
     end
     if plr.Character then onCharAdded(plr.Character) end
     plr.CharacterAdded:Connect(onCharAdded)
 end
 
-for _, plr in pairs(Players:GetPlayers()) do createPlayerRow(plr) end
-Players.PlayerAdded:Connect(createPlayerRow)
+-- Roblox arkadaşlarını friend olarak işaretle
+local friendSet = {}
+pcall(function()
+    local pages = Players:GetFriendsAsync(LocalPlayer.UserId)
+    while true do
+        for _, info in pairs(pages:GetCurrentPage()) do
+            friendSet[info.Username] = true
+        end
+        if pages.IsFinished then break end
+        pages:AdvanceToNextPageAsync()
+    end
+end)
+
+local function autoFriend(plr)
+    if friendSet[plr.Name] and getClass(plr) == "neutral" then
+        setClass(plr, "friend")
+        if playerButtons[plr] then
+            refreshButtonFull(plr, playerButtons[plr])
+        end
+        setupFriendDamageListener(plr)
+    end
+end
+
+for _, plr in pairs(Players:GetPlayers()) do
+    createPlayerRow(plr)
+    autoFriend(plr)
+end
+Players.PlayerAdded:Connect(function(plr)
+    createPlayerRow(plr)
+    autoFriend(plr)
+    -- Yeni gelen oyuncunun karakteri henüz yüklenmemiş olabilir; yüklenince ESP kur
+    if not plr.Character then
+        plr.CharacterAdded:Wait()
+    end
+    task.wait(0.2)
+    createESP(plr)
+end)
 Players.PlayerRemoving:Connect(function(plr)
     if playerButtons[plr] then
         playerButtons[plr]:Destroy()
@@ -484,8 +515,9 @@ local function createESP(plr)
     esp.Size = UDim2.new(0, 200, 0, 30)
     esp.StudsOffset = Vector3.new(0, 3.2, 0)
     esp.AlwaysOnTop = true
-    esp.Enabled = true -- Her zaman aktif
     esp.Parent = root
+
+
 
     local lbl = Instance.new("TextLabel")
     lbl.Name = "Label"
@@ -499,8 +531,7 @@ local function createESP(plr)
     lbl.Parent = esp
 end
 
--- RENDER LOOP
--- FIX: ESP artık panel durumundan bağımsız, her zaman güncellenir
+-- RENDER LOOP: ESP güncelle
 RunService.RenderStepped:Connect(function()
     local localChar = LocalPlayer.Character
     local localRoot = localChar and localChar:FindFirstChild("HumanoidRootPart")
@@ -510,19 +541,16 @@ RunService.RenderStepped:Connect(function()
             local char = plr.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
             if char and root then
-                -- ESP oluştur (yoksa)
+                -- ESP oluştur (her zaman, panel kapalıysa da)
                 createESP(plr)
-
                 local esp = root:FindFirstChild("SW_ESP")
                 if esp then
-                    -- ÖNEKİ HATA: esp.Enabled = true sadece listFrame.Visible bloğu içindeydi
-                    -- DÜZELTME: Enabled her zaman true, panel durumundan bağımsız
+                    -- ESP her zaman açık; leaderboard kapalıysa da stat güncellenir
                     esp.Enabled = true
-
                     local hum = char:FindFirstChildOfClass("Humanoid")
                     local lbl = esp:FindFirstChild("Label")
                     if hum and lbl then
-                        local hp = math.floor(hum.Health)
+                        local hp   = math.floor(hum.Health)
                         local dist = 0
                         if localRoot then
                             dist = math.floor((localRoot.Position - root.Position).Magnitude)
@@ -534,9 +562,8 @@ RunService.RenderStepped:Connect(function()
                         lbl.Text = plr.Name .. "  ♥" .. hp .. "  " .. dist .. "m"
                     end
                 end
-
-                -- Buton mesafe güncelle (sadece panel açıksa)
-                if listFrame.Visible and playerButtons[plr] then
+                -- Buton mesafe güncelle
+                if playerButtons[plr] then
                     refreshButton(plr, playerButtons[plr])
                 end
             end
