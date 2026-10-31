@@ -1,147 +1,140 @@
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local Me = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
 local BLUE = Color3.fromRGB(173, 216, 230)
 local CREAM = Color3.fromRGB(255, 239, 213)
-local TEXT_COLOR = Color3.fromRGB(115, 75, 155)
-local WHITE = Color3.fromRGB(255, 255, 255)
+local WHITE = Color3.new(1, 1, 1)
 
-local function setupPlayer(player)
-    if player == LocalPlayer then return end
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "CuteESP"
+Gui.ResetOnSpawn = false
+Gui.Parent = Me:WaitForChild("PlayerGui")
 
-    local function setupCharacter(character)
-        local head = character:WaitForChild("Head", 15)
-        local humanoid = character:WaitForChild("Humanoid", 15)
+local Labels = {}
 
-        if not head or not humanoid then return end
+local function createLabel(player)
+    if player == Me then return end
 
-        local oldGui = head:FindFirstChild("CuteESPLabel")
-        if oldGui then oldGui:Destroy() end
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.fromOffset(150, 48)
+    frame.BackgroundTransparency = 1
+    frame.Visible = false
+    frame.Parent = Gui
 
-        local oldHighlight = character:FindFirstChild("CuteESP")
-        if oldHighlight then oldHighlight:Destroy() end
+    local name = Instance.new("TextLabel")
+    name.Size = UDim2.new(1, 0, 0, 21)
+    name.BackgroundTransparency = 1
+    name.Font = Enum.Font.FredokaOne
+    name.TextSize = 15
+    name.TextStrokeTransparency = 0.2
+    name.TextStrokeColor3 = WHITE
+    name.Parent = frame
 
-        local isFriend = false
-        local ok, result = pcall(function()
-            return LocalPlayer:IsFriendsWith(player.UserId)
-        end)
-        if ok then isFriend = result end
+    local back = Instance.new("Frame")
+    back.Position = UDim2.new(0.17, 0, 0, 22)
+    back.Size = UDim2.new(0.66, 0, 0, 5)
+    back.BackgroundColor3 = WHITE
+    back.BorderSizePixel = 0
+    back.Parent = frame
 
-        local color = isFriend and BLUE or CREAM
+    Instance.new("UICorner", back).CornerRadius = UDim.new(1, 0)
 
-        local highlight = Instance.new("Highlight")
-        highlight.Name = "CuteESP"
-        highlight.Adornee = character
-        highlight.FillColor = color
-        highlight.OutlineColor = color
-        highlight.FillTransparency = 0.9
-        highlight.OutlineTransparency = 0.1
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        highlight.Parent = character
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.fromScale(1, 1)
+    fill.BorderSizePixel = 0
+    fill.BackgroundColor3 = Color3.fromRGB(152, 230, 170)
+    fill.Parent = back
 
-        local gui = Instance.new("BillboardGui")
-        gui.Name = "CuteESPLabel"
-        gui.Adornee = head
-        gui.Size = UDim2.fromOffset(120, 48)
-        gui.StudsOffset = Vector3.new(0, 2.4, 0)
-        gui.AlwaysOnTop = true
-        gui.MaxDistance = 1000
-        gui.Parent = head
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(1, 0)
 
-        local name = Instance.new("TextLabel")
-        name.Name = "PlayerName"
-        name.Size = UDim2.new(1, 0, 0, 23)
-        name.BackgroundTransparency = 1
-        name.Text = "♡ " .. player.DisplayName
-        name.TextColor3 = color
-        name.TextStrokeColor3 = WHITE
-        name.TextStrokeTransparency = 0.15
-        name.Font = Enum.Font.FredokaOne
-        name.TextScaled = true
-        name.Parent = gui
+    local hpText = Instance.new("TextLabel")
+    hpText.Position = UDim2.new(0, 0, 0, 29)
+    hpText.Size = UDim2.new(1, 0, 0, 15)
+    hpText.BackgroundTransparency = 1
+    hpText.Font = Enum.Font.GothamBold
+    hpText.TextSize = 11
+    hpText.TextColor3 = Color3.fromRGB(115, 75, 155)
+    hpText.TextStrokeColor3 = WHITE
+    hpText.TextStrokeTransparency = 0
+    hpText.Parent = frame
 
-        local barBack = Instance.new("Frame")
-        barBack.Name = "HealthBack"
-        barBack.Position = UDim2.new(0.1, 0, 0, 25)
-        barBack.Size = UDim2.new(0.8, 0, 0, 7)
-        barBack.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-        barBack.BorderSizePixel = 0
-        barBack.Parent = gui
-
-        local backCorner = Instance.new("UICorner")
-        backCorner.CornerRadius = UDim.new(1, 0)
-        backCorner.Parent = barBack
-
-        local fill = Instance.new("Frame")
-        fill.Name = "HealthFill"
-        fill.Size = UDim2.fromScale(1, 1)
-        fill.BackgroundColor3 = Color3.fromRGB(152, 230, 170)
-        fill.BorderSizePixel = 0
-        fill.Parent = barBack
-
-        local fillCorner = Instance.new("UICorner")
-        fillCorner.CornerRadius = UDim.new(1, 0)
-        fillCorner.Parent = fill
-
-        local hpText = Instance.new("TextLabel")
-        hpText.Name = "HealthText"
-        hpText.Position = UDim2.new(0, 0, 0, 33)
-        hpText.Size = UDim2.new(1, 0, 0, 14)
-        hpText.BackgroundTransparency = 1
-        hpText.TextColor3 = TEXT_COLOR
-        hpText.TextStrokeColor3 = WHITE
-        hpText.TextStrokeTransparency = 0
-        hpText.Font = Enum.Font.GothamBold
-        hpText.TextScaled = true
-        hpText.Parent = gui
-
-        local function updateHealth()
-            if not humanoid.Parent then return end
-
-            local maxHP = math.max(humanoid.MaxHealth, 1)
-            local hp = math.clamp(humanoid.Health, 0, maxHP)
-            local percent = hp / maxHP
-
-            fill.Size = UDim2.new(percent, 0, 1, 0)
-
-            if percent >= 0.7 then
-                fill.BackgroundColor3 =
-                    Color3.fromRGB(152, 230, 170)
-            elseif percent >= 0.35 then
-                fill.BackgroundColor3 =
-                    Color3.fromRGB(255, 183, 110)
-            else
-                fill.BackgroundColor3 =
-                    Color3.fromRGB(255, 125, 145)
-            end
-
-            hpText.Text = string.format(
-                "♥ %d / %d HP",
-                math.ceil(hp),
-                math.ceil(maxHP)
-            )
-        end
-
-        updateHealth()
-        humanoid.HealthChanged:Connect(updateHealth)
-        humanoid:GetPropertyChangedSignal("MaxHealth")
-            :Connect(updateHealth)
-
-        print("Cute ESP aktif:", player.Name)
-    end
-
-    player.CharacterAdded:Connect(function(character)
-        task.spawn(setupCharacter, character)
-    end)
-
-    if player.Character then
-        task.spawn(setupCharacter, player.Character)
-    end
+    Labels[player] = {
+        frame = frame,
+        name = name,
+        fill = fill,
+        hpText = hpText
+    }
 end
 
 for _, player in ipairs(Players:GetPlayers()) do
-    setupPlayer(player)
+    createLabel(player)
 end
 
-Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerAdded:Connect(createLabel)
+
+Players.PlayerRemoving:Connect(function(player)
+    if Labels[player] then
+        Labels[player].frame:Destroy()
+        Labels[player] = nil
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    for player, data in pairs(Labels) do
+        local character = player.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        local head = character and character:FindFirstChild("Head")
+
+        if character and humanoid and head and humanoid.Health > 0 then
+            local screenPos, onScreen =
+                Camera:WorldToViewportPoint(head.Position)
+
+            if onScreen then
+                data.frame.Visible = true
+                data.frame.Position = UDim2.fromOffset(
+                    screenPos.X - 75,
+                    screenPos.Y - 55
+                )
+
+                local color = player:IsFriendsWith(Me.UserId)
+                    and BLUE or CREAM
+
+                data.name.Text = player.DisplayName
+                data.name.TextColor3 = color
+
+                local health = math.clamp(
+                    humanoid.Health / humanoid.MaxHealth, 0, 1
+                )
+
+                data.fill.Size = UDim2.fromScale(health, 1)
+
+                if health > 0.6 then
+                    data.fill.BackgroundColor3 =
+                        Color3.fromRGB(152, 230, 170)
+                elseif health > 0.3 then
+                    data.fill.BackgroundColor3 =
+                        Color3.fromRGB(255, 190, 100)
+                else
+                    data.fill.BackgroundColor3 =
+                        Color3.fromRGB(255, 110, 130)
+                end
+
+                local distance = math.floor(
+                    (Camera.CFrame.Position - head.Position).Magnitude
+                )
+
+                data.hpText.Text =
+                    "♥ " .. math.floor(humanoid.Health)
+                    .. " HP  |  " .. distance .. " studs"
+            else
+                data.frame.Visible = false
+            end
+        else
+            data.frame.Visible = false
+        end
+    end
+end)
