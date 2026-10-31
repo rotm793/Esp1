@@ -1,86 +1,91 @@
 
+-- SW_HUB ESP
+-- Roblox Studio / LocalScript
+-- Kendi oyunun için
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-local Me = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-local BLUE = Color3.fromRGB(173, 216, 230)
-local CREAM = Color3.fromRGB(255, 239, 213)
-local WHITE = Color3.new(1, 1, 1)
+-- SETTINGS
+local ESP_ENABLED = true
+local SHOW_HEALTH = true
+local SHOW_DISTANCE = true
+local MAX_DISTANCE = 2000
 
-local Gui = Instance.new("ScreenGui")
-Gui.Name = "CuteESP"
-Gui.ResetOnSpawn = false
-Gui.Parent = Me:WaitForChild("PlayerGui")
+local FRIEND_COLOR = Color3.fromRGB(60, 160, 255)
+local ENEMY_COLOR = Color3.fromRGB(255, 65, 65)
+local NEUTRAL_COLOR = Color3.fromRGB(255, 255, 255)
 
-local Labels = {}
-local FRIEND_CACHE = {}
+local classifications = {}
+local espObjects = {}
 
-local function readValue(container, names)
-    if not container then return nil end
+-- CLASSIFICATION
+local function getColor(player)
+    local class = classifications[player.UserId]
 
-    for _, key in ipairs(names) do
-        local attribute = container:GetAttribute(key)
+    if class == "friend" then
+        return FRIEND_COLOR
+    elseif class == "enemy" then
+        return ENEMY_COLOR
+    end
 
-        if attribute ~= nil then
-            return attribute
-        end
+    return NEUTRAL_COLOR
+end
 
-        local value = container:FindFirstChild(key, true)
+-- INVISIBILITY CHECK
+local function isInvisible(character)
+    local total = 0
+    local invisible = 0
 
-        if value and (value:IsA("StringValue")
-            or value:IsA("BoolValue")) then
-            return value.Value
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart")
+            and part.Name ~= "HumanoidRootPart" then
+
+            total += 1
+
+            if math.max(
+                part.Transparency,
+                part.LocalTransparencyModifier
+            ) >= 0.95 then
+                invisible += 1
+            end
         end
     end
 
-    return nil
+    return total > 0 and invisible == total
 end
 
-local function getCharacterName(player, character)
+-- SHIELD CHECK
+local function hasShield(player, character)
     local names = {
-        "CharacterName",
-        "SelectedCharacter",
-        "CurrentCharacter",
-        "EquippedCharacter",
-        "Character"
+        "Shielded",
+        "Shield",
+        "ForceField",
+        "HasShield",
+        "IsShielded",
+        "ShieldActive"
     }
 
-    local result = readValue(player, names)
-        or readValue(character, names)
-
-    if typeof(result) == "string" and result ~= "" then
-        return result
+    if character:FindFirstChildOfClass("ForceField") then
+        return true
     end
 
-    return character.Name
-end
-
-local function hasShield(container)
-    if not container then return false end
-
-    local keys = {
-        "Shield",
-        "ShieldActive",
-        "HasShield",
-        "IsShielded"
-    }
-
-    for _, key in ipairs(keys) do
-        if container:GetAttribute(key) == true then
+    for _, name in ipairs(names) do
+        if player:GetAttribute(name) == true
+            or character:GetAttribute(name) == true then
             return true
         end
+    end
 
-        local value = container:FindFirstChild(key, true)
+    for _, container in ipairs({player, character}) do
+        for _, name in ipairs(names) do
+            local value = container:FindFirstChild(name)
 
-        if value then
-            if value:IsA("BoolValue") and value.Value == true then
-                return true
-            end
-
-            if value:IsA("Folder")
-                or value:IsA("Model")
-                or value:IsA("Tool") then
+            if value and value:IsA("BoolValue")
+                and value.Value then
                 return true
             end
         end
@@ -89,190 +94,126 @@ local function hasShield(container)
     return false
 end
 
-local function createLabel(player)
-    if player == Me then return end
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.fromOffset(210, 72)
-    frame.BackgroundTransparency = 1
-    frame.Visible = false
-    frame.Parent = Gui
-
-    local name = Instance.new("TextLabel")
-    name.Size = UDim2.new(1, -25, 0, 23)
-    name.BackgroundTransparency = 1
-    name.Font = Enum.Font.FredokaOne
-    name.TextSize = 15
-    name.TextStrokeTransparency = 0.2
-    name.TextStrokeColor3 = WHITE
-    name.Parent = frame
-
-    local shieldIcon = Instance.new("TextLabel")
-    shieldIcon.Size = UDim2.fromOffset(25, 23)
-    shieldIcon.Position = UDim2.new(1, -25, 0, 0)
-    shieldIcon.BackgroundTransparency = 1
-    shieldIcon.Text = "🛡️"
-    shieldIcon.TextSize = 15
-    shieldIcon.Visible = false
-    shieldIcon.Parent = frame
-
-    local characterName = Instance.new("TextLabel")
-    characterName.Position = UDim2.new(0, 0, 0, 23)
-    characterName.Size = UDim2.new(1, 0, 0, 19)
-    characterName.BackgroundTransparency = 1
-    characterName.Font = Enum.Font.GothamBold
-    characterName.TextSize = 14
-    characterName.TextColor3 = Color3.fromRGB(180, 150, 220)
-    characterName.TextStrokeTransparency = 0.3
-    characterName.TextStrokeColor3 = WHITE
-    characterName.Parent = frame
-
-    local back = Instance.new("Frame")
-    back.Position = UDim2.new(0.17, 0, 0, 45)
-    back.Size = UDim2.new(0.66, 0, 0, 5)
-    back.BackgroundColor3 = WHITE
-    back.BorderSizePixel = 0
-    back.Parent = frame
-
-    Instance.new("UICorner", back).CornerRadius =
-        UDim.new(1, 0)
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.fromScale(1, 1)
-    fill.BorderSizePixel = 0
-    fill.BackgroundColor3 = Color3.fromRGB(152, 230, 170)
-    fill.Parent = back
-
-    Instance.new("UICorner", fill).CornerRadius =
-        UDim.new(1, 0)
-
-    local hpText = Instance.new("TextLabel")
-    hpText.Position = UDim2.new(0, 0, 0, 54)
-    hpText.Size = UDim2.new(1, 0, 0, 15)
-    hpText.BackgroundTransparency = 1
-    hpText.Font = Enum.Font.GothamBold
-    hpText.TextSize = 11
-    hpText.TextColor3 = Color3.fromRGB(115, 75, 155)
-    hpText.TextStrokeColor3 = WHITE
-    hpText.TextStrokeTransparency = 0
-    hpText.Parent = frame
-
-    Labels[player] = {
-        frame = frame,
-        name = name,
-        fill = fill,
-        hpText = hpText,
-        shieldIcon = shieldIcon,
-        characterName = characterName
-    }
-
-    task.spawn(function()
-        local success, result = pcall(function()
-            return player:IsFriendsWith(Me.UserId)
-        end)
-
-        FRIEND_CACHE[player] = success and result or false
-    end)
-end
-
-for _, player in ipairs(Players:GetPlayers()) do
-    createLabel(player)
-end
-
-Players.PlayerAdded:Connect(createLabel)
-
-Players.PlayerRemoving:Connect(function(player)
-    if Labels[player] then
-        Labels[player].frame:Destroy()
-        Labels[player] = nil
-    end
-
-    FRIEND_CACHE[player] = nil
-end)
-
-local updateTimer = 0
-local UPDATE_RATE = 1 / 30
-
-RunService.RenderStepped:Connect(function(dt)
-    updateTimer += dt
-
-    if updateTimer < UPDATE_RATE then
+-- CREATE ESP
+local function createESP(player)
+    if player == LocalPlayer or espObjects[player] then
         return
     end
 
-    updateTimer = 0
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "SW_HUB_ESP"
+    billboard.Size = UDim2.fromOffset(270, 95)
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = false
+    billboard.MaxDistance = MAX_DISTANCE
 
-    local camera = workspace.CurrentCamera
-    if not camera then return end
+    local label = Instance.new("TextLabel")
+    label.Name = "Info"
+    label.Size = UDim2.fromScale(1, 1)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = NEUTRAL_COLOR
+    label.TextStrokeColor3 = Color3.new(0, 0, 0)
+    label.TextStrokeTransparency = 0.15
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 13
+    label.TextWrapped = true
+    label.RichText = false
+    label.Parent = billboard
 
-    local cameraPosition = camera.CFrame.Position
+    espObjects[player] = {
+        gui = billboard,
+        label = label
+    }
+end
 
-    for player, data in pairs(Labels) do
+-- INITIAL PLAYERS
+for _, player in ipairs(Players:GetPlayers()) do
+    createESP(player)
+end
+
+Players.PlayerAdded:Connect(createESP)
+
+Players.PlayerRemoving:Connect(function(player)
+    local data = espObjects[player]
+
+    if data then
+        data.gui:Destroy()
+        espObjects[player] = nil
+    end
+
+    classifications[player.UserId] = nil
+end)
+
+-- CHARACTER / ESP UPDATE
+RunService.RenderStepped:Connect(function()
+    local myCharacter = LocalPlayer.Character
+    local myRoot = myCharacter
+        and myCharacter:FindFirstChild("HumanoidRootPart")
+
+    for player, data in pairs(espObjects) do
         local character = player.Character
-        local humanoid = character and
-            character:FindFirstChildOfClass("Humanoid")
-        local head = character and
-            character:FindFirstChild("Head")
 
-        if character and humanoid and head
-            and humanoid.Health > 0 then
+        local root = character
+            and character:FindFirstChild("HumanoidRootPart")
 
-            local screenPos, onScreen =
-                camera:WorldToViewportPoint(head.Position)
+        local humanoid = character
+            and character:FindFirstChildOfClass("Humanoid")
 
-            if onScreen and screenPos.Z > 0 then
-                data.frame.Visible = true
+        if not ESP_ENABLED or not myRoot
+            or not root or not humanoid
+            or humanoid.Health <= 0 then
 
-                data.frame.Position = UDim2.fromOffset(
-                    screenPos.X - 105,
-                    screenPos.Y - 65
-                )
-
-                data.name.Text = "@" .. player.Name
-                data.name.TextColor3 =
-                    FRIEND_CACHE[player] and BLUE or CREAM
-
-                -- KALKAN DÜZELTMESİ
-                local shieldActive =
-                    hasShield(player) or hasShield(character)
-
-                data.shieldIcon.Visible = shieldActive
-                data.shieldIcon.Text =
-                    shieldActive and "🛡️" or ""
-
-                data.characterName.Text =
-                    getCharacterName(player, character)
-
-                local health = math.clamp(
-                    humanoid.Health / math.max(humanoid.MaxHealth, 1),
-                    0, 1
-                )
-
-                data.fill.Size = UDim2.fromScale(health, 1)
-
-                if health > 0.6 then
-                    data.fill.BackgroundColor3 =
-                        Color3.fromRGB(152, 230, 170)
-                elseif health > 0.3 then
-                    data.fill.BackgroundColor3 =
-                        Color3.fromRGB(255, 190, 100)
-                else
-                    data.fill.BackgroundColor3 =
-                        Color3.fromRGB(255, 110, 130)
-                end
-
-                local distance = math.floor(
-                    (cameraPosition - head.Position).Magnitude
-                )
-
-                data.hpText.Text =
-                    "♥ " .. math.floor(humanoid.Health) ..
-                    " HP  |  " .. distance .. " studs"
-            else
-                data.frame.Visible = false
-            end
-        else
-            data.frame.Visible = false
+            data.gui.Enabled = false
+            data.gui.Parent = nil
+            continue
         end
+
+        local distance =
+            (myRoot.Position - root.Position).Magnitude
+
+        if distance > MAX_DISTANCE then
+            data.gui.Enabled = false
+            data.gui.Parent = nil
+            continue
+        end
+
+        data.gui.Adornee = root
+        data.gui.Parent = PlayerGui
+        data.gui.Enabled = true
+
+        local invisible = isInvisible(character)
+        local shielded = hasShield(player, character)
+
+        local icons = ""
+
+        if invisible then
+            icons ..= " 👻"
+        end
+
+        if shielded then
+            icons ..= " 🛡️"
+        end
+
+        local lines = {
+            player.DisplayName .. " (@" .. player.Name .. ")" .. icons,
+            shielded and "SHIELD: ON" or "SHIELD: OFF"
+        }
+
+        if SHOW_HEALTH then
+            table.insert(lines,
+                "HP: " .. math.floor(humanoid.Health)
+                .. " / " .. math.floor(humanoid.MaxHealth))
+        end
+
+        if SHOW_DISTANCE then
+            table.insert(lines,
+                "DISTANCE: " .. math.floor(distance) .. "m")
+        end
+
+        data.label.Text = table.concat(lines, "\n")
+        data.label.TextColor3 = getColor(player)
     end
 end)
+
+print("SW_HUB ESP loaded!")
